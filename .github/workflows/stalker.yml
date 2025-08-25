@@ -1,0 +1,50 @@
+name: Stalk Repo Commits
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Private Action
+        uses: actions/checkout@v4
+        with:
+          repository: TheElixirRobot/Commits-Stalker
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+          path: CommitsStalker
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyGithub noobstuffs
+
+      - name: Run Commit Stalker
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} 
+        run: |
+          cd CommitsStalker
+          python stalker.py
+
+      - name: Commit and Push changes
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          author_name: 'TheElixirRobot'
+          author_email: 'projectelixirbot@gmail.com'
+          directory: CommitsStalker
+          repository: TheElixirRobot/Commits-Stalker
+          branch: main
+          message: 'Update commits [BOT]'
+
